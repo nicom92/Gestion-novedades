@@ -1,0 +1,10 @@
+timestamp,legajo,nombre,tipo_empleado,tipo_novedad,fecha_nacimiento,dni,cuil,domicilio,email,subvencionado,trabaja_otra_institucion,horas_catedras,asignaciones_familiares,cantidad_hijos,nivel,fecha_alta,cargo,reemplazo_persona_ya_trabaja,reemplazo_cargo_que_cubre,fecha_inicio_reemplazo,fecha_fin_reemplazo,fecha_baja,motivo_baja,tipo_otro,cargos_actuales,tipo_movimiento,subvencion,codigo,observaciones
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+2025-08-31T01:59:32,3000,juan perez,,Cambio de Categoría,,,,,,,,5,,,,,,,,,,,,,maestro de grado,Alta,si,f31,alta de profesor
+2025-08-31T02:04:10,1222,rolo gomez,,Horas Extra,,,,,,,,5,,,,,,,,,,,,,artes plasticas,,si,f31,horas extras al 100
+2025-08-31T02:22:01,789,ramon,,Otro,,,,,,,,10,,,,,,,,,,,,,profesor,Alta,si,f31,Cargado por marcelo
+2025-08-31T17:19:18,1111,juan ramon,,Horas Extra,,,,,,,,,,,,,,,,,,,,,maestranza,Alta,no,605,horas extra tras bambalina
+1500,Nicolas,Docente,,Alta,,,,,,,,Inicial,,,,,,,,,,,,,Profesor,2025-01-21,Renuncia,SIN HORAS EXTRAS,si
+2025-09-04T23:49:06,4444,Nicolas gomez,Docente,Alta,1999-05-01,35548798,2335548798,las piedras 1239,mnicolas2292@gmail.com,Si,Si,15,Si,3,Primario,2025-08-05,Maestra/o de Grado,,,,,,,,,,,,
+2025-09-04T23:50:04,4444,Nicolas gomez,Docente,Alta,1999-05-01,35548798,2335548798,las piedras 1239,mnicolas2292@gmail.com,Si,Si,15,Si,3,Primario,2025-08-05,Maestra/o de Grado,,,,,,,,,Alta,f600,f31,
+2025-09-04T23:52:31,2,fede,Docente,Baja,,,,,,,,,,,,,,,,,,2025-08-06,Jubilación,,,,,,
