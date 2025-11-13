@@ -9,19 +9,29 @@
   <style>
     body { padding: 24px; }
     .card { border-radius: 12px; }
-    .table thead th { white-space: nowrap; }
+    .table thead th { 
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      background-color: #fff;
+      z-index: 10;
+    }
     .search { max-width: 420px; }
+    .table-responsive {
+      max-height: 70vh;
+      overflow-y: auto;
+    }
   </style>
 </head>
 <body>
-<div class="container">
+<div class="container-fluid">
   <h1 class="mb-3">Novedades Cargadas</h1>
 
   <div class="d-flex align-items-center justify-content-between mb-3">
     <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">← Cargar nueva novedad</a>
     <div class="d-flex gap-2">
       <input id="search" type="text" class="form-control search" placeholder="Buscar en la tabla...">
-      <a href="{{ url_for('descargar') }}" class="btn btn-primary">Descargar CSV</a>
+      <a href="{{ url_for('descargar') }}" class="btn btn-primary">Descargar Excel</a>
     </div>
   </div>
 
@@ -31,52 +41,128 @@
 
       {% if rows and rows|length > 0 %}
         <div class="table-responsive">
-          <table class="table table-striped align-middle" id="tabla">
+          <table class="table table-striped table-sm align-middle" id="tabla">
             <thead>
               <tr>
+                <!-- Datos básicos -->
                 <th>Fecha Carga</th>
                 <th>Legajo</th>
-                <th>Nombre</th>
-                <th>Tipo Emp.</th>
+                <th>Nombre y Apellido</th>
+                <th>Tipo Empleado</th>
                 <th>Tipo Novedad</th>
+                
+                <!-- Datos personales -->
+                <th>Fecha Nacimiento</th>
+                <th>DNI</th>
+                <th>CUIL</th>
+                <th>CBU</th>
+                <th>Banco</th>
+                <th>Domicilio</th>
+                <th>Email</th>
+                <th>Obra Social</th>
+                
+                <!-- Datos del alta -->
                 <th>Nivel</th>
-                <th>Cargo</th>
                 <th>Fecha Alta</th>
-                <th>Fecha Baja</th>
-                <th>Inicio Reemp.</th>
-                <th>Fin Reemp.</th>
-                <th>Motivo Baja</th>
-                <th>Horas Cát.</th>
-                <th>Asig. Fam.</th>
-                <th>Hijos</th>
+                <th>Cargo</th>
+                <th>Carácter Cargo</th>
+                
+                <!-- Decretos -->
+                <th>Trabaja Otra Inst.</th>
+                <th>Tipo Institución</th>
+                <th>Horas Cátedras</th>
+                
+                <!-- Datos laborales -->
                 <th>Subvencionado</th>
-                <th>Otra Institución</th>
+                <th>Asig. Familiares</th>
+                <th>Cantidad Hijos</th>
+                
+                <!-- Reemplazo -->
+                <th>Ya Trabaja</th>
+                <th>Cargo que Cubre</th>
+                <th>Inicio Reemplazo</th>
+                <th>Fin Reemplazo</th>
+                
+                <!-- Baja -->
+                <th>Fecha Baja</th>
+                <th>Motivo Baja</th>
+                
+                <!-- Otros -->
+                <th>Tipo Otro</th>
+                
+                <!-- Información adicional -->
+                <th>Cargos Actuales</th>
+                <th>Tipo Movimiento</th>
+                <th>Subvención</th>
                 <th>Código</th>
                 <th>Observaciones</th>
+
+                <th>Acciones</th>
+
               </tr>
             </thead>
             <tbody>
             {% for r in rows %}
               <tr>
+                <!-- Datos básicos -->
                 <td>{{ r.get("timestamp","") }}</td>
                 <td>{{ r.get("legajo","") }}</td>
                 <td>{{ r.get("nombre","") }}</td>
                 <td>{{ r.get("tipo_empleado","") }}</td>
                 <td>{{ r.get("tipo_novedad","") }}</td>
+                
+                <!-- Datos personales -->
+                <td>{{ r.get("fecha_nacimiento","") }}</td>
+                <td>{{ r.get("dni","") }}</td>
+                <td>{{ r.get("cuil","") }}</td>
+                <td>{{ r.get("cbu","") }}</td>
+                <td>{{ r.get("banco","") }}</td>
+                <td>{{ r.get("domicilio","") }}</td>
+                <td>{{ r.get("email","") }}</td>
+                <td>{{ r.get("obra_social","") }}</td>
+                
+                <!-- Datos del alta -->
                 <td>{{ r.get("nivel","") }}</td>
-                <td>{{ r.get("cargo","") }}</td>
                 <td>{{ r.get("fecha_alta","") }}</td>
-                <td>{{ r.get("fecha_baja","") }}</td>
-                <td>{{ r.get("fecha_inicio_reemplazo","") }}</td>
-                <td>{{ r.get("fecha_fin_reemplazo","") }}</td>
-                <td>{{ r.get("motivo_baja","") }}</td>
+                <td>{{ r.get("cargo","") }}</td>
+                <td>{{ r.get("caracter_del_cargo","") }}</td>
+                
+                <!-- Decretos -->
+                <td>{{ r.get("trabaja_otra_institucion","") }}</td>
+                <td>{{ r.get("tipo_institucion","") }}</td>
                 <td>{{ r.get("horas_catedras","") }}</td>
+                
+                <!-- Datos laborales -->
+                <td>{{ r.get("subvencionado","") }}</td>
                 <td>{{ r.get("asignaciones_familiares","") }}</td>
                 <td>{{ r.get("cantidad_hijos","") }}</td>
-                <td>{{ r.get("subvencionado","") }}</td>
-                <td>{{ r.get("trabaja_otra_institucion","") }}</td>
+                
+                <!-- Reemplazo -->
+                <td>{{ r.get("reemplazo_persona_ya_trabaja","") }}</td>
+                <td>{{ r.get("reemplazo_cargo_que_cubre","") }}</td>
+                <td>{{ r.get("fecha_inicio_reemplazo","") }}</td>
+                <td>{{ r.get("fecha_fin_reemplazo","") }}</td>
+                
+                <!-- Baja -->
+                <td>{{ r.get("fecha_baja","") }}</td>
+                <td>{{ r.get("motivo_baja","") }}</td>
+                
+                <!-- Otros -->
+                <td>{{ r.get("tipo_otro","") }}</td>
+                
+                <!-- Información adicional -->
+                <td>{{ r.get("cargos_actuales","") }}</td>
+                <td>{{ r.get("tipo_movimiento","") }}</td>
+                <td>{{ r.get("subvencion","") }}</td>
                 <td>{{ r.get("codigo","") }}</td>
                 <td>{{ r.get("observaciones","") }}</td>
+
+                <td class="text-nowrap">
+                  <a class="btn btn-sm btn-outline-primary"
+                     href="{{ url_for('index') }}?edit_id={{ r.get('id') }}">
+                    Editar
+                  </a>
+                </td>  
               </tr>
             {% endfor %}
             </tbody>
@@ -92,6 +178,7 @@
 <script>
   const input = document.getElementById('search');
   const table = document.getElementById('tabla');
+  
   input.addEventListener('input', function () {
     const term = this.value.toLowerCase();
     const rows = table.querySelectorAll('tbody tr');
@@ -103,6 +190,3 @@
 </script>
 </body>
 </html>
-
-
-
