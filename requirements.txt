@@ -2,4 +2,3 @@ Flask==3.0.0
 gunicorn
 python-dateutil
 openpyxl==3.1.2
-pandas==2.2.0
