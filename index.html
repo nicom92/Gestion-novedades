@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Carga de Novedades</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { padding: 24px; }
+    .card { border-radius: 12px; }
+    .required::after { content: " *"; color: #dc3545; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1 class="mb-3">Carga de Novedades</h1>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="mb-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+  {% endwith %}
+
+  <form action="{{ url_for('actualizar') if edit_mode else url_for('enviar') }}" method="post" id="formNovedad" novalidate>
+    {% if edit_mode %}
+      <input type="hidden" name="id" value="{{ data.get('id') }}">
+    {% endif %}
+
+    <!-- Bloque 1: Datos del empleado -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="card-title mb-3">Datos del empleado</h5>
+        <div class="row g-3">
+          <div class="col-md-2">
+            <label class="form-label">Legajo</label>
+            <input type="text" name="legajo" class="form-control" placeholder="Opcional">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label required">Nombre y apellido</label>
+            <input type="text" name="nombre" class="form-control" required
+                   value="{{ data.get('nombre','')  }}">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label required">Tipo de empleado</label>
+            <select name="tipo_empleado" class="form-select" required>
+              {% set cur = data.get('tipo_empleado', '') %}
+              <option value="">Seleccionar...</option>
+              <option value="Docente" {{ 'selected' if cur == 'Docente' else '' }}>Docente</option>
+              <option value="No Docente" {{ 'selected' if cur == 'No Docente' else '' }}>No Docente</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label required">Tipo de novedad</label>
+            <select name="tipo_novedad" id="tipo_novedad" class="form-select" required>
+              <option value="">Seleccionar...</option>
+              <option>Alta</option>
+              <option>Baja</option>
+              <option>Reemplazo</option>
+              <option>Inasistencia</option>
+              <option>Lic.Sin Goce</option>
+              <option>Anticipo</option>
+              <option>Otros</option>
+
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloque 2: Detalles según novedad -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="card-title mb-3">Detalles de la novedad</h5>
+
+        <!-- ALTA (y también Reemplazo si persona NO trabaja) -->
+        <div id="altaFields" class="d-none">
+          <h6 class="mb-2">Datos personales</h6>
+          <div class="row g-3 mb-3">
+            <div class="col-md-3">
+              <label class="form-label">Fecha de nacimiento</label>
+              <input type="date" name="fecha_nacimiento" class="form-control"
+                     value="{{ data.get('fecha_nacimiento','') if edit_mode else '' }}">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">DNI</label>
+              <input type="text" name="dni" class="form-control" placeholder="Sólo números">
+            </div>
+            <div class="col-md">
+              <label class="form-label">CUIL</label>
+              <input type="text" name="cuil" class="form-control" placeholder="Ej: 20-12345678-3">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">CBU</label>
+              <input type="text" name="cbu" class="form-control" placeholder="Ej: 201234567830000000000000">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Banco</label>
+              <input type="text" name="banco" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Domicilio</label>
+              <input type="text" name="domicilio" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Email</label>
+              <input type="email" name="email" class="form-control">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Obra Social</label>
+              <input type="text" name="obra_social" class="form-control">
+            </div>
+          </div>
+
+          <h6 class="mb-2">Datos del alta</h6>  
+          <div class="row g-3 mb-3">
+            <div class="col-md-3">
+              <label class="form-label required" id="label_nivel">Nivel</label>
+              <select name="nivel" id="nivel" class="form-select">
+                <option value="">Seleccionar...</option>
+                <option>Inicial</option>
+                <option>Primario</option>
+                <option>Secundario</option>
+                <option>Terciario</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label required" id="label_fecha_alta">Fecha de alta</label>
+              <input type="date" name="fecha_alta" id="fecha_alta" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label required" id="label_cargo">Cargo</label>
+              <!--Cargos docentes-->
+              <select name="cargo" id="cargo_docente" class="form-select d-none" disabled>
+                <option value="">Seleccionar...</option>
+                <option>MAESTRA DE GRADO</option>
+                <option>MAESTRA DE NIVEL INICIAL</option>
+                <option>MAESTRA SECRETARIA</option>
+                <option>MAESTRA ESPECIAL</option>
+                <option>DIRECTOR NIVEL PRIMARIO</option>
+                <option>VICE DIRECTOR NIVEL PRIMARIO</option>
+                <option>PROFESOR RELIGIÓN</option>
+                <option>PROFESOR NIVEL MEDIO</option>
+                <option>PROFESOR NIVEL TERCIARIO</option>
+                <option>DIRECTOR DE ESTUDIOS N.SEC</option>
+                <option>DIRECTOR DE ESTUDIOS N.TER.</option>
+                <option>RECTOR</option>
+                <option>PRECEPTOR</option>
+                <option>SUB JEFE PRECEPTOR</option>
+                <option>JEFE PRECEPTOR</option>
+                <option>BIBLIOTECARIO</option>
+                <option>ACP</option>
+                <option>SECRETARIO NIVEL SEC</option>
+                <option>SECRETARIO NIVEL TER</option>
+                <option>ASESOR PEDAGÓGICO</option>
+                <option>MEEP</option>
+                <option>BEDEL</option>
+              </select>
+
+              <!--Cargos No Docentes-->
+              <select name="cargo" id="cargo_nodocente" class="form-select d-none" disabled>
+                <option value="">Seleccionar...</option>
+                <option>ADM.1°CAT</option>
+                <option>ADM.2°CAT</option>
+                <option>ADM.3°CAT</option>
+                <option>ADM.4°CAT</option>
+                <option>ADM.5°CAT</option>
+                <option>MAEST.1°CAT</option>
+                <option>MAEST.2°CAT</option>
+                <option>MAEST.3°CAT</option>
+                <option>MAEST.4°CAT</option>
+                <option>MAEST.5°CAT</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Carácter del cargo</label>
+              <select name="caracter_del_cargo" class="form-select">
+                <option value="">--</option>
+                <option>Titular</option>
+                <option>Suplente</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- HORAS SEGÚN TIPO DE EMPLEADO -->
+          <div class="row g-3 mb-3">
+
+            <!-- Horas cátedras (SOLO DOCENTES) -->
+            <div class="col-md-3" id="horas_catedras_container">
+              <label class="form-label">Horas cátedras</label>
+              <input 
+                type="number" 
+                class="form-control"
+                name="horas_catedras_alta"
+                id="horas_catedras_alta"
+                min="0" step="0.5"
+                placeholder="Ej: 12"
+              >
+            </div>
+
+            <!-- Horas totales docentes -->
+            <div class="col-md-3" id="horas_totales_doc_container">
+              <label class="form-label">Horas totales en el nivel</label>
+              <input 
+                type="number" 
+                class="form-control"
+                name="horas_totales_doc"
+                id="horas_totales_doc"
+                min="0" step="0.5"
+                placeholder="Ej: 28"
+              >
+            </div>
+
+            <!-- Horas totales NO docentes -->
+            <div class="col-md-3 d-none" id="horas_totales_nodoc_container">
+              <label class="form-label">Horas totales</label>
+              <input 
+                type="number" 
+                class="form-control"
+                name="horas_totales_nodoc"
+                id="horas_totales_nodoc"
+                min="0" step="0.5"
+                placeholder="Ej: 40"
+              >
+            </div>
+
+          </div>
+
+
+          
+          
+
+
+          <!-- DECRETOS -->
+          <h6 class="mb-2">Decretos</h6>
+          <div class="row g-3 mb-3">
+            <div class="col-md-3">
+              <label class="form-label">Trabaja en otra institución</label>
+              <select name="trabaja_otra_institucion" class="form-select">
+                <option value="">--</option>
+                <option>Si</option>
+                <option>No</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Tipo de institución</label>
+              <select name="tipo_institucion" class="form-select">
+                <option value="">--</option>
+                <option>Pública</option>
+                <option>Privada</option>
+                <option>Ambas</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Horas cátedras</label>
+              <input type="number" name="horas_catedras" class="form-control" min="0" step="0.5">
+            </div>
+            <!-- ✅ Campo CARGO añadido -->
+            <div class="col-md-3">
+              <label class="form-label">Cargo</label>
+              <input type="text" name="cargo_decreto" class="form-control" placeholder="Ej: Profesor, Preceptor...">
+            </div>
+          </div>
+
+            <h6 class="mb-2">Datos laborales</h6>
+            <div class="row g-3 mb-3">
+              <div class="col-md-3">
+                <label class="form-label">Subvencionado</label>
+                <input type="text" name="subvencionado" class="form-select" placeholder="Código">                  
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Asig. familiares</label>
+                <select name="asignaciones_familiares" class="form-select">
+                  <option value="">--</option>
+                  <option>Si</option>
+                  <option>No</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Hijos</label>
+                <input type="number" min="0" name="cantidad_hijos" class="form-control">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Cónyuge</label>
+                <input type="text" name="conyuge" class="form-control" placeholder="Nombre y apellido">
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label">Escolaridad</label>
+                <select name="escolaridad" class="form-select">
+                  <option value="">--</option>
+                  <option>Primario</option>
+                  <option>Secundario</option>
+                  <option>Superior</option>
+                </select>
+              </div>
+                
+            </div>
+            <hr class="my-3">
+          </div>
+
+        <!-- REEMPLAZO -->
+        <div id="reemplazoFields" class="d-none">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label required">¿Ya trabaja en el colegio?</label>
+              <select name="reemplazo_persona_ya_trabaja" id="yaTrabaja" class="form-select">
+                <option value="">Seleccionar...</option>
+                <option>Si</option>
+                <option>No</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Sub-bloque cuando SÍ trabaja -->
+          <div id="reemplazoYaTrabajaDetalle" class="mt-3 d-none">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label required">Cargo que cubre</label>
+                <input type="text" name="reemplazo_cargo_que_cubre" class="form-control">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label required">Inicio reemplazo</label>
+                <input type="date" name="fecha_inicio_reemplazo" class="form-control">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label required">Fin reemplazo</label>
+                <input type="date" name="fecha_fin_reemplazo" class="form-control">
+              </div>
+            </div>
+            <hr class="my-3">
+          </div>
+
+          <!-- Sub-bloque cuando NO trabaja (equivale a ALTA) -->
+          <div id="reemplazoNoTrabajaDetalle" class="mt-3 d-none">
+            <div class="alert alert-info">
+              Este reemplazo corresponde a una <strong>persona nueva</strong>. Completá los campos de <em>Alta</em>.
+            </div>
+          </div>
+        </div>
+
+        <!-- BAJA -->
+        <div id="bajaFields" class="d-none">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label required">Fecha de baja</label>
+              <input type="date" name="fecha_baja" id="fecha_baja" class="form-control">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label required">Motivo</label>
+              <select name="motivo_baja" id="motivo_baja" class="form-select">
+                <option value="">Seleccionar...</option>
+                <option>Jubilación</option>
+                <option>Renuncia</option>
+                <option>Despido</option>
+                <option>Lic.Médica</option>
+                <option>Lic. Maternidad</option>
+                <option>Fallecimiento</option>
+                <option>Lic. Art 33</option>
+                <option>Lic. Art 35</option>
+                <option>Lic. por ART</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- OTROS -->
+        <div id="otrosFields" class="d-none">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label required">Tipo</label>
+              <select name="tipo_otro" id="tipo_otro" class="form-select">
+                <option value="">Seleccionar...</option>
+                <option>Anticipo</option>
+                <option>Inasistencia</option>
+                <option>Licencia sin goce</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Bloque 3: Extras y observaciones -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="card-title mb-3">Información adicional "(se puede estructurar  a medida este apartado)"</h5>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Cargos actuales</label>
+            <input type="text" name="cargos_actuales" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Subvención (texto)</label>
+            <input type="text" name="subvencion" class="form-control" placeholder="Ej: Código 600 / F">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Código</label>
+            <input type="text" name="codigo" class="form-control" placeholder="Ej: F31">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Observaciones</label>
+            <textarea name="observaciones" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button class="btn btn-primary">Guardar novedad</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('ver') }}">Ver novedades cargadas</a>
+      <a class="btn btn-outline-primary" href="{{ url_for('descargar') }}">Descargar CSV</a>
+    </div>
+  </form>
+</div>
+
+
+{% if edit_mode %}
+<script>
+  window.editMode = true;
+  window.formData = JSON.parse('{{ data|tojson|safe if edit_mode else "{}" }}');
+</script>
+{% else %}
+<script>
+  window.editMode = false;
+  window.formData = {};
+</script>
+{% endif %}
+
+
+
+<script>
+  const tipoNovedad = document.getElementById('tipo_novedad');
+  const alta = document.getElementById('altaFields');
+  const baja = document.getElementById('bajaFields');
+  const reemplazo = document.getElementById('reemplazoFields');
+  const otros = document.getElementById('otrosFields');
+  const tipoEmpleado = document.querySelector('select[name="tipo_empleado"]');
+  const cargoDoc = document.getElementById('cargo_docente');
+  const cargoNoDoc = document.getElementById('cargo_nodocente'); 
+
+
+
+  const yaTrabaja = document.getElementById('yaTrabaja');
+  const repSi = document.getElementById('reemplazoYaTrabajaDetalle');
+  const repNo = document.getElementById('reemplazoNoTrabajaDetalle');
+
+  const nivel = document.getElementById('nivel');
+  const fechaAlta = document.getElementById('fecha_alta');
+  const cargo = document.getElementById('cargo');
+
+
+
+  const fechaBaja = document.getElementById('fecha_baja');
+  const motivoBaja = document.getElementById('motivo_baja');
+  const tipoOtro = document.getElementById('tipo_otro');
+  
+
+
+
+
+
+  function showHorasFor(tipo) {
+    horasCatedrasContainer = document.getElementById("horas_catedras_container");
+    horasTotDocContainer = document.getElementById("horas_totales_doc_container");
+    horasTotNoDocContainer = document.getElementById("horas_totales_nodoc_container");
+
+    if (tipo === "Docente") {
+      horasCatedrasContainer.classList.remove("d-none");
+      horasTotDocContainer.classList.remove("d-none");
+      horasTotNoDocContainer.classList.add("d-none");
+    } else {
+      horasCatedrasContainer.classList.add("d-none");
+      horasTotDocContainer.classList.add("d-none");
+      horasTotNoDocContainer.classList.remove("d-none");
+    }
+  }
+
+
+  function clearRequired() {
+    [nivel, fechaAlta, cargo, fechaBaja, motivoBaja, tipoOtro]
+      .forEach(el => el && el.removeAttribute('required'));
+    setCargoRequired(false);  
+  }
+
+  function hideAll() {
+    alta.classList.add('d-none');
+    baja.classList.add('d-none');
+    reemplazo.classList.add('d-none');
+    otros.classList.add('d-none');
+  }
+
+    // ===== Helpers para los CARGOS (dos selects) =====
+  function hideBothCargos() {
+    [cargoDoc, cargoNoDoc].forEach(s => {
+      s.classList.add('d-none');
+      s.setAttribute('disabled', 'disabled');
+      s.removeAttribute('required');
+      // limpiar valor al ocultar
+      s.value = "";
+    });
+  }
+
+  function showCargoFor(tipo) {
+    hideBothCargos();
+    if (tipo === 'Docente') {
+      cargoDoc.classList.remove('d-none');
+      cargoDoc.removeAttribute('disabled');
+    } else if (tipo === 'No Docente') {
+      cargoNoDoc.classList.remove('d-none');
+      cargoNoDoc.removeAttribute('disabled');
+    }
+  }
+
+  function setCargoRequired(flag) {
+    // pone required al select que esté visible
+    if (!cargoDoc.classList.contains('d-none')) {
+      if (flag) cargoDoc.setAttribute('required','required'); else cargoDoc.removeAttribute('required');
+    }
+    if (!cargoNoDoc.classList.contains('d-none')) {
+      if (flag) cargoNoDoc.setAttribute('required','required'); else cargoNoDoc.removeAttribute('required');
+    }
+  }
+
+  // ===== Lógica según Tipo de novedad =====
+  function onTipoChange() {
+    hideAll();
+    clearRequired();
+
+    const v = tipoNovedad.value;
+    const tipoEmp = tipoEmpleado.value;
+
+    // asegurar que mostramos el select de cargo correcto
+    showCargoFor(tipoEmp);
+
+    if (v === 'Alta') {
+      alta.classList.remove('d-none');
+
+      nivel.setAttribute('required', 'required');
+      fechaAlta.setAttribute('required', 'required');
+      setCargoRequired(true); // cargo obligatorio en Alta
+
+    } else if (v === 'Baja') {
+      baja.classList.remove('d-none');
+
+      fechaBaja.setAttribute('required', 'required');
+      motivoBaja.setAttribute('required', 'required');
+      setCargoRequired(false);
+
+      
+
+    // ====== MOSTRAR CAMPOS EXTRA PARA BAJA ======
+
+        // CUIL
+
+
+
+    } else if (v === 'Reemplazo') {
+      reemplazo.classList.remove('d-none');
+
+      // oculto sub-bloques hasta que elijan Sí/No
+      if (repSi) repSi.classList.add('d-none');
+      if (repNo) repNo.classList.add('d-none');
+
+      setCargoRequired(false); // depende de si ya trabaja
+      
+
+    } else if (v === 'Otros') {
+      otros.classList.remove('d-none');
+      tipoOtro.setAttribute('required', 'required');
+      setCargoRequired(false);
+    }
+  }
+
+  function onYaTrabajaChange() {
+    if (!yaTrabaja) return;
+    const val = yaTrabaja.value;
+    const tipoEmp = tipoEmpleado.value;
+
+    if (val === 'Si') {
+      if (repSi) repSi.classList.remove('d-none');
+      if (repNo) repNo.classList.add('d-none');
+
+      nivel.removeAttribute('required');
+      fechaAlta.removeAttribute('required');
+      setCargoRequired(false);
+
+    } else if (val === 'No') {
+      if (repSi) repSi.classList.add('d-none');
+      if (repNo) repNo.classList.remove('d-none');
+
+      // Equivale a ALTA
+      alta.classList.remove('d-none');
+      nivel.setAttribute('required', 'required');
+      fechaAlta.setAttribute('required', 'required');
+
+      // mostrar select correcto y exigir cargo
+      showCargoFor(tipoEmp);
+      setCargoRequired(true);
+    } else {
+      if (repSi) repSi.classList.add('d-none');
+      if (repNo) repNo.classList.add('d-none');
+      setCargoRequired(false);
+    }
+  }
+
+  // Cuando cambian entre Docente / No Docente
+  function onTipoEmpleadoChange() {
+    const tipoEmp = tipoEmpleado.value;
+    showCargoFor(tipoEmp);
+    showHorasFor(tipoEmp);
+
+    const v = tipoNovedad.value;
+    const requiereCargo =
+      (v === 'Alta') ||
+      (v === 'Reemplazo' && yaTrabaja && yaTrabaja.value === 'No');
+
+    setCargoRequired(requiereCargo);
+  }
+
+  // EVENTOS
+  tipoNovedad.addEventListener('change', onTipoChange);
+  if (tipoEmpleado) tipoEmpleado.addEventListener('change', onTipoEmpleadoChange);
+  if (yaTrabaja) yaTrabaja.addEventListener('change', onYaTrabajaChange);
+
+  // Inicialización al cargar
+  onTipoEmpleadoChange();
+  onTipoChange();
+
+  // ====== MODO EDICIÓN: precarga mínima (Nombre + Fecha de nacimiento) y secciones ======
+if (window.editMode) {
+  const fd = window.formData || {};
+
+  // 1) Primero, setear selectores “controladores” si vienen en los datos:
+  if (fd.tipo_empleado) {
+    tipoEmpleado.value = fd.tipo_empleado;
+    onTipoEmpleadoChange(); // decide qué combo de cargo mostrar (docente/no docente)
+  }
+  if (fd.tipo_novedad) {
+    tipoNovedad.value = fd.tipo_novedad;
+    onTipoChange(); // muestra Alta/Baja/Reemplazo/Otros
+  }
+  if (yaTrabaja && fd.reemplazo_persona_ya_trabaja) {
+    yaTrabaja.value = fd.reemplazo_persona_ya_trabaja;
+    onYaTrabajaChange();
+  }
+
+  // 2) Precargar SOLO los campos que queremos mostrar ahora (nombre y fecha_nacimiento)
+  const setVal = (name, val) => {
+    const el = document.querySelector(`[name="${name}"]`);
+    if (el != null && val != null) el.value = val;
+  };
+
+  setVal('nombre', fd.nombre);
+  setVal('fecha_nacimiento', fd.fecha_nacimiento);
+
+  // 3) Reforzar visibilidad luego de setear valores
+  onTipoEmpleadoChange();
+  onTipoChange();
+  if (yaTrabaja) onYaTrabajaChange();
+}
+</script>
+</body>
+</html>
+
+
+
